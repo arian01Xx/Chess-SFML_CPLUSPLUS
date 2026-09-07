@@ -186,93 +186,66 @@ struct World{
     }
 };
 
-struct Peon{
+struct Piece{
     int y, x; //es porque los parametros de texture estan al reves, i es columna y j fila, no como la matriz clasica[fila][columna]
-    Peon(int _y, int _x): y(_y), x(_x){}
+    Piece(int _y, int _x): y(_y), x(_x){}
 
-    sf::Sprite init(General& general, sf::Texture& texture, int& i, int j){ //NO OLVIDES LA REFERENCIA PARA QUE APAREZCAN LOS CAMBIOS!! 
-        return general.init(texture,i,j);
-    }
-
-    void changeCoords(int& new_x, int& new_y){
-        x=new_x;
-        y=new_y;
-    }
-
-    void executeMove(){
-        std::cout<<"working yet"<<std::endl;
-    }
-};
-
-struct Tower{ //COLUMNA 4 FILA 0
-    int x, y;
-    Tower(int _x, int _y): x(_x), y(_y){}
-
-    void changeCoords(int& new_x, int& new_y){
-        x=new_x;
-        y=new_y;
-    }
-
-    sf::Sprite init(General& general, sf::Texture& texture, int& j, int& i){ //NO OLVIDES LA REFERENCIA PARA QUE APAREZCAN LOS CAMBIOS!!
+    sf::Sprite init(General& general, sf::Texture& texture, int& j, int i){ //NO OLVIDES LA REFERENCIA PARA QUE APAREZCAN LOS CAMBIOS!! 
         return general.init(texture,j,i);
     }
-};
-
-struct Alfil{
-    int x, y;
-    Alfil(int _x, int _y): x(_x), y(_y){}
 
     void changeCoords(int& new_x, int& new_y){
         x=new_x;
         y=new_y;
     }
 
-    sf::Sprite init(General& general,sf::Texture& texture, int& j, int& i){ //NO OLVIDES LA REFERENCIA PARA QUE APAREZCAN LOS CAMBIOS!!
-        return general.init(texture,j,i);
-    }
+    virtual ~Piece(){}
 };
 
-struct Caballo{
-    int x, y;
-    Caballo(int _x, int _y): x(_x), y(_y){}
-
-    void changeCoords(int& new_x, int& new_y){
-        x=new_x;
-        y=new_y;
-    }
-
-    sf::Sprite init(General& general,sf::Texture& texture, int& j, int& i){ //NO OLVIDES LA REFERENCIA PARA QUE APAREZCAN LOS CAMBIOS!!
-        return general.init(texture,j,i);
-    }
+struct Peon: Piece{
+    Peon(int _y, int _x): Piece(_y,_x) {}  
 };
 
-struct Queen{
-    int x, y;
-    Queen(int _x, int _y): x(_x), y(_y){}
-
-    void changeCoords(int& new_x, int& new_y){
-        x=new_x;
-        y=new_y;
-    }
-
-    sf::Sprite init(General& general,sf::Texture& texture, int& j, int& i){ //NO OLVIDES LA REFERENCIA PARA QUE APAREZCAN LOS CAMBIOS!!
-        return general.init(texture,j,i);
-    }
+struct Tower: Piece{ //COLUMNA 4 FILA 0
+    Tower(int _y, int _x): Piece(_y,_x) {} 
 };
 
-struct King{
-    int x, y;
-    King(int _x, int _y): x(_x), y(_y){}
-
-    void changeCoords(int& new_x, int& new_y){
-        x=new_x;
-        y=new_y;
-    }
-
-    sf::Sprite init(General& general,sf::Texture& texture, int& j, int& i){ //NO OLVIDES LA REFERENCIA PARA QUE APAREZCAN LOS CAMBIOS!!
-        return general.init(texture,j,i);
-    }
+struct Alfil: Piece{
+    Alfil(int _y, int _x): Piece(_y,_x){} 
 };
+
+struct Caballo: Piece{
+    Caballo(int _y, int _x): Piece(_y,_x){}
+};
+
+struct Queen: Piece{
+    Queen(int _y, int _x): Piece(_y,_x){}
+};
+
+struct King: Piece{
+    King(int _y, int _x): Piece(_y,_x){}
+};
+
+void ThisPieceNotSelected(){
+    std::cout<<"***************************"<<std::endl;
+    std::cout<<"THIS PIECE NO WAS SELECTED!"<<std::endl;
+    std::cout<<"***************************"<<std::endl;
+}
+
+void ThisPieceWasSelected(int pieceX, int pieceY){
+    std::cout<<"***************************"<<std::endl;
+    std::cout<<"TURN OF: ";
+    if(turnWhite) std::cout<<"WHITE"<<std::endl;
+    else std::cout<<"BLACK"<<std::endl;
+    std::cout<<"***************************"<<std::endl;
+    std::cout<<"CONGRATULATIONS! PIECE SELECTED"<<std::endl;
+    x_1=pieceX;
+    y_1=pieceY;
+    std::cout<<"_x: "<<_x<<" - piece.x: "<<pieceX<<std::endl;
+    std::cout<<"_y: "<<_y<<" - piece.y: "<<pieceY<<std::endl;
+    std::cout<<"x_1: "<<x_1<<std::endl;
+    std::cout<<"y_1: "<<y_1<<std::endl;
+}
 
 void evaluate(General& general, King& king, Queen& queen, Caballo& caballo1, Caballo& caballo2, 
               Alfil& alfil1, Alfil& alfil2, Tower& tower1, Tower& tower2, std::vector<Peon>& Peons){
@@ -286,33 +259,68 @@ void evaluate(General& general, King& king, Queen& queen, Caballo& caballo1, Cab
     if(general.map[_x][_y]==1){
         for(auto& p: Peons){ 
             if(_x==p.x && _y==p.y){
-                std::cout<<"CONGRATULATIONS! "<<std::endl;
-                x_1=p.x;
-                y_1=p.y;
-                std::cout<<"_x: "<<_x<<" - p.x: "<<p.x<<std::endl;
-                std::cout<<"_y: "<<_y<<" - p.y: "<<p.y<<std::endl;
-                std::cout<<"x_1: "<<x_1<<std::endl;
-                std::cout<<"y_1: "<<y_1<<std::endl;
-                p.executeMove(); //funcion void que redibujarà el mapa, creo que se le pasaràn muchos parametros
-            }else{
-                std::cout<<"*************************"<<std::endl;
-                std::cout<<"ERROR! "<<std::endl; 
-                std::cout<<"_x: "<<_x<<" - p.x: "<<p.x<<std::endl;
-                std::cout<<"_y: "<<_y<<" - p.y: "<<p.y<<std::endl;
-                std::cout<<"x_1: "<<x_1<<std::endl;
-                std::cout<<"y_1: "<<y_1<<std::endl;
-            }
+                ThisPieceWasSelected(p.x, p.y);
+                return;
+            }            
+            ThisPieceNotSelected();
         }
+
     }else if(general.map[_x][_y]==2){
+        if(tower1.x==_x && tower1.y==_y){
+            ThisPieceWasSelected(tower1.x, tower1.y);
+            return;
+        }
+
+        if(tower2.x==_x && tower2.y==_y){ 
+            ThisPieceWasSelected(tower2.x, tower2.y);
+            return;
+        }
+
+        ThisPieceNotSelected();
 
     }else if(general.map[_x][_y]==3){
+        if(caballo1.x==_x && caballo1.y==_y){ 
+            ThisPieceWasSelected(caballo1.x, caballo1.y);
+            return;
+        }
 
+        if(caballo2.x==_x && caballo2.y==_y){ 
+            ThisPieceWasSelected(caballo2.x, caballo2.y);
+            return;
+        }
+        
+        ThisPieceNotSelected();
+        
     }else if(general.map[_x][_y]==4){
+        if(alfil1.x==_x && alfil1.y==_y){
+            ThisPieceWasSelected(alfil1.x, alfil1.y);
+            return;
+        }
 
+        if(alfil2.x==_x && alfil2.y==_y){ 
+            ThisPieceWasSelected(alfil2.x, alfil2.y);
+            return;
+        }
+
+        ThisPieceNotSelected();
+        
     }else if(general.map[_x][_y]==5){
+        if(queen.x==_x && queen.y==_y){ 
+            ThisPieceWasSelected(queen.x, queen.y);
+            return;
+        }
+
+        ThisPieceNotSelected();
 
     }else if(general.map[_x][_y]==6){
+        if(king.x==_x && king.y==_y){ 
+            ThisPieceWasSelected(king.x, king.y);
+            return;
+        }
 
+        ThisPieceNotSelected();
+    }else{
+        ThisPieceNotSelected();
     }
 }
 
@@ -324,13 +332,15 @@ void whatPiecesWasSelected(General& general, King& kingW1, King& kingB1, Queen& 
                            std::vector<Peon>& PeonBs,
                            std::vector<Peon>& PeonWs){
     if(turnWhite){
-        turnWhite=false;
+        turnWhite=false; //SIN EMBARGO ESTO ES TEMPORAL YA QUE NO DEBE SER ASI
+                         //EL TURNO ES SOLO CUANDO LA PIEZA SE MUEVA POR COMPLETO DEL SITIO
+                         //POR LO QUE ESTO ES TEMPORAL Y NECESITA SER REUBICADO
         evaluate(general, kingW1, queenW1, caballoW1, caballoW2, alfilW1, alfilW2, towerW1, towerW2, PeonWs);
-        //turnWhite=false;
     }else{
-        turnWhite=true;
+        turnWhite=true; //SIN EMBARGO ESTO ES TEMPORAL YA QUE NO DEBE SER ASI
+                         //EL TURNO ES SOLO CUANDO LA PIEZA SE MUEVA POR COMPLETO DEL SITIO
+                         //POR LO QUE ESTO ES TEMPORAL Y NECESITA SER REUBICADO
         evaluate(general, kingB1, queenB1, caballoB1, caballoB2, alfilB1, alfilB2, towerB1, towerB2, PeonBs);
-        //turnWhite=true;
     }
 }
 
@@ -348,10 +358,13 @@ void infoGeneral(int& col, int& row, bool& evaluate, General& general){
     std::cout<<"_x: "<<_x<<" - _y: "<<_y<<std::endl;
     std::cout<<"----------------------------------------"<<std::endl;
     std::cout<<"Who is the turn: "<<std::endl;
-    if(turnWhite) std::cout<<"WHITE TURN!"<<std::endl;
-    else std::cout<<"BLACK TURN!"<<std::endl;
+    //if(turnWhite) std::cout<<"WHITE TURN!"<<std::endl;
+    //else std::cout<<"BLACK TURN!"<<std::endl;
     std::cout<<"----------------------------------------"<<std::endl;
     std::cout<<"COORD FOUND IT!: "<<x_1<<"-"<<y_1<<std::endl;
+    std::cout<<"*********************************"<<std::endl;
+    std::cout<<"*********************************"<<std::endl;
+    std::cout<<"*********************************"<<std::endl;
 }
 
 void execute(){
@@ -464,19 +477,23 @@ void execute(){
                 }
             }
             if(const auto* mouseButtonPressed=event->getIf<sf::Event::MouseButtonPressed>()){
-                col=mouseButtonPressed->position.x;
-                row=mouseButtonPressed->position.y;
+                if(mouseButtonPressed->button == sf::Mouse::Button::Left){
+                    col=mouseButtonPressed->position.x;
+                    row=mouseButtonPressed->position.y;
 
-                _eva=general.evaluate(col,row);
-            }
-        }
+                    _eva=general.evaluate(col,row);
 
-        if(dragging){
-            infoGeneral(col,row,_eva,general); //se imprimen coordenadas etc...
-            whatPiecesWasSelected(general,KW1,KB1,QW1,QB1,CW1,CW2,CB1,CB2,
+                    if(_eva){
+                        infoGeneral(col,row,_eva,general);
+                        whatPiecesWasSelected(general,KW1,KB1,QW1,QB1,CW1,CW2,CB1,CB2,
                                   AW1,AW2,AB1,AB2,TW1,TW2,TB1,TB2,
-                                  PBs,PWs); //pieza seleccionada, calculo de los cuadros que puede moverse
-        }
+                                  PBs,PWs
+                        ); //pieza seleccionada, calculo de los cuadros que puede moverse
+                        //infoGeneral(col,row,_eva,general);
+                    }
+                } 
+            }
+        } 
 
         window.clear();
 
