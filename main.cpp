@@ -27,6 +27,17 @@ struct General{
         {2,3,4,5,6,4,3,2}
     };
 
+    std::vector<std::vector<int>> teams={ //NEGROS NUMERO 1, BLANCOS NUMERO 2
+        {0,0,0,0,0,0,0,0}, 
+        {0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0}
+    };
+
     sf::Sprite init(sf::Texture& texture, int& j, int i){ //NO OLVIDES LA REFERENCIA PARA QUE APAREZCAN LOS CAMBIOS!!
         sf::Sprite Piece(texture);
 
@@ -187,11 +198,12 @@ struct World{
 };
 
 struct Piece{
+    bool white;
     int y, x; //es porque los parametros de texture estan al reves, i es columna y j fila, no como la matriz clasica[fila][columna]
-    Piece(int _y, int _x): y(_y), x(_x){}
+    Piece(int _y, int _x, bool w): y(_y), x(_x), white(w){}
 
-    sf::Sprite init(General& general, sf::Texture& texture, int& j, int i){ //NO OLVIDES LA REFERENCIA PARA QUE APAREZCAN LOS CAMBIOS!! 
-        return general.init(texture,j,i);
+    sf::Sprite init(General& general, sf::Texture& texture){ //NO OLVIDES LA REFERENCIA PARA QUE APAREZCAN LOS CAMBIOS!! 
+        return general.init(texture,y,x);
     }
 
     void changeCoords(int& new_x, int& new_y){
@@ -202,28 +214,85 @@ struct Piece{
     virtual ~Piece(){}
 };
 
-struct Peon: Piece{
-    Peon(int _y, int _x): Piece(_y,_x) {}  
+/*                  BLACK TEAM:
+ {2,3,4,5,6,4,3,2}, torres fila:0 columna:0, fila:0 columna:7 
+ {1,1,1,1,1,1,1,1}, caballos fila:0 columna:1, fila:0 columna:6
+ {0,0,0,0,0,0,0,0}, alfiles fila:0 columna:2, fila:0 columna:5
+ {0,0,0,0,0,0,0,0}, reina fila:0 columna:3, rey fila:0, columna:4
+ {0,0,0,0,0,0,0,0}, peones filas:1
+ {0,0,0,0,0,0,0,0}, 
+ {1,1,1,1,1,1,1,1},
+ {2,3,4,5,6,4,3,2}
+ WHITE TEAM: filas:7
+ * */
+
+struct Peon: Piece{ //COLUMNA-FILA
+    Peon(int _y, int _x, General& general): Piece(_y,_x,_y==6) {
+        if(_y==6) general.teams[_x][_y]=2; //EQUIPO BLANCO
+        else general.teams[_x][_y]=1; //EQUIPO NEGRO
+    }
+
+    void execute(General& general){
+        if(white){ //team 2
+            /*if(general.map[_x-1][_y]==0)  
+            if(general.map[_x-2][_y]==0) 
+            if(general.teams[_x-1][_y-1]==1)
+            if(general.teams[_x-1][_y+1]==1)*/
+        }
+    }
 };
 
-struct Tower: Piece{ //COLUMNA 4 FILA 0
-    Tower(int _y, int _x): Piece(_y,_x) {} 
+struct Tower: Piece{ //COLUMNA - FILA
+    Tower(int _y, int _x, General& general): Piece(_y,_x,_y==7) {
+        if(_y==7) general.teams[_x][_y]=2;
+        else general.teams[_x][_y]=1;
+    } 
+
+    /*PRIMERO QUE PINTE LOS LUGARES DONDE SE PUEDE MOVER, NO IMPORTA SI ROMPE REGLAS
+     * LUEGO DEBO HACER QUE LAS PIEZAS INTERCAMBIEN INFORMACION DE QUE EQUIPO PERTENECEN 
+     * PARA QUE EVALUEN SI PUEDEN COMERSE*/
+    /*void execute(General& general){
+        //UP
+        for(int i=_x; i>0; i--){
+            if(general.map==0){
+                pintarCuadro(_y,i);
+            }
+        }
+        //DOWN
+        for(int i=_x; ){
+
+        }
+        //LEFT
+        //RIGHT
+    }*/
 };
 
 struct Alfil: Piece{
-    Alfil(int _y, int _x): Piece(_y,_x){} 
+    Alfil(int _y, int _x, General& general): Piece(_y,_x,_y==7){
+        if(_y==7) general.teams[_x][_y]=2;
+        else general.teams[_x][_y]=1;
+    } 
 };
 
 struct Caballo: Piece{
-    Caballo(int _y, int _x): Piece(_y,_x){}
+    Caballo(int _y, int _x, General& general): Piece(_y,_x,_y==7){
+        if(_y==7) general.teams[_x][_y]=2;
+        else general.teams[_x][_y]=1;
+    }
 };
 
 struct Queen: Piece{
-    Queen(int _y, int _x): Piece(_y,_x){}
+    Queen(int _y, int _x, General& general): Piece(_y,_x,_y==7){
+        if(_y==7) general.teams[_x][_y]=2;
+        else general.teams[_x][_y]=1;
+    }
 };
 
 struct King: Piece{
-    King(int _y, int _x): Piece(_y,_x){}
+    King(int _y, int _x, General& general): Piece(_y,_x,_y==7){
+        if(_y==7) general.teams[_x][_y]=2;
+        else general.teams[_x][_y]=1;
+    }
 };
 
 void ThisPieceNotSelected(){
@@ -260,6 +329,7 @@ void evaluate(General& general, King& king, Queen& queen, Caballo& caballo1, Cab
         for(auto& p: Peons){ 
             if(_x==p.x && _y==p.y){
                 ThisPieceWasSelected(p.x, p.y);
+                p.execute(general); //pinta los cuadros donde tiene permitido moverse
                 return;
             }            
             ThisPieceNotSelected();
@@ -267,7 +337,10 @@ void evaluate(General& general, King& king, Queen& queen, Caballo& caballo1, Cab
 
     }else if(general.map[_x][_y]==2){
         if(tower1.x==_x && tower1.y==_y){
+
             ThisPieceWasSelected(tower1.x, tower1.y);
+            //tower1.execute(general);
+
             return;
         }
 
@@ -396,45 +469,45 @@ void execute(){
     
     ////////////////// REY  ////////////////////////////////
     int king_pos=4;
-    King KW1(king_pos, row_seven), KB1(king_pos, row_zero);
-    sf::Sprite king_white1=KW1.init(general,textPieces[10],king_pos,row_seven); //29
-    sf::Sprite king_black1=KB1.init(general,textPieces[11],king_pos,row_zero); //5
+    King KW1(king_pos, row_seven, general), KB1(king_pos, row_zero, general);
+    sf::Sprite king_white1=KW1.init(general,textPieces[10]); //29
+    sf::Sprite king_black1=KB1.init(general,textPieces[11]); //5
     
     /////////////////// REINA ///////////////////////////////
     int queen_pos=3;
-    Queen QB1(queen_pos, row_zero), QW1(queen_pos, row_seven);
-    sf::Sprite queen_black1=QB1.init(general,textPieces[9],queen_pos,row_zero);//4
-    sf::Sprite queen_white1=QW1.init(general,textPieces[8],queen_pos,row_seven);//28
+    Queen QB1(queen_pos, row_zero, general), QW1(queen_pos, row_seven, general);
+    sf::Sprite queen_black1=QB1.init(general,textPieces[9]);//4
+    sf::Sprite queen_white1=QW1.init(general,textPieces[8]);//28
     
     ////////////////// CABALLO /////////////////////////////
     int caballo_left=1, caballo_right=6;
-    Caballo CW1(caballo_left, row_seven), CW2(caballo_right, row_seven); 
-    sf::Sprite caballo_white1=CW1.init(general,textPieces[6],caballo_left,row_seven);//26
-    sf::Sprite caballo_white2=CW2.init(general,textPieces[6],caballo_right,row_seven);//31
+    Caballo CW1(caballo_left, row_seven, general), CW2(caballo_right, row_seven, general); 
+    sf::Sprite caballo_white1=CW1.init(general,textPieces[6]);//26
+    sf::Sprite caballo_white2=CW2.init(general,textPieces[6]);//31
 
-    Caballo CB1(caballo_left, row_zero), CB2(caballo_right, row_zero);
-    sf::Sprite caballo_black1=CB1.init(general,textPieces[7],caballo_left,row_zero);//2
-    sf::Sprite caballo_black2=CB2.init(general,textPieces[7],caballo_right,row_zero);//7
+    Caballo CB1(caballo_left, row_zero, general), CB2(caballo_right, row_zero, general);
+    sf::Sprite caballo_black1=CB1.init(general,textPieces[7]);//2
+    sf::Sprite caballo_black2=CB2.init(general,textPieces[7]);//7
                                                                                      
     ///////////////   ALFIL   //////////////////////////////    
     int alfil_left=2, alfil_right=5;
-    Alfil AW1(alfil_left, row_seven), AW2(alfil_right, row_seven);
-    sf::Sprite alfil_white1=AW1.init(general,textPieces[4],alfil_left,row_seven);//27
-    sf::Sprite alfil_white2=AW2.init(general,textPieces[4],alfil_right,row_seven);//30
+    Alfil AW1(alfil_left, row_seven, general), AW2(alfil_right, row_seven, general);
+    sf::Sprite alfil_white1=AW1.init(general,textPieces[4]);//27
+    sf::Sprite alfil_white2=AW2.init(general,textPieces[4]);//30
 
-    Alfil AB1(alfil_left, row_zero), AB2(alfil_right, row_zero);
-    sf::Sprite alfil_black1=AB1.init(general,textPieces[5],alfil_left,row_zero);//3
-    sf::Sprite alfil_black2=AB2.init(general,textPieces[5],alfil_right,row_zero);//6
+    Alfil AB1(alfil_left, row_zero, general), AB2(alfil_right, row_zero, general);
+    sf::Sprite alfil_black1=AB1.init(general,textPieces[5]);//3
+    sf::Sprite alfil_black2=AB2.init(general,textPieces[5]);//6
     
     ///////////////  TORRES   ///////////////////////////////
     int tower_left=0, tower_right=7;
-    Tower TW1(tower_left, row_seven), TW2(tower_right, row_seven);
-    sf::Sprite tower_white1=TW1.init(general,textPieces[2],tower_left,row_seven);//25
-    sf::Sprite tower_white2=TW2.init(general,textPieces[2],tower_right,row_seven);//32
+    Tower TW1(tower_left, row_seven, general), TW2(tower_right, row_seven, general);
+    sf::Sprite tower_white1=TW1.init(general,textPieces[2]);//25
+    sf::Sprite tower_white2=TW2.init(general,textPieces[2]);//32
 
-    Tower TB1(tower_left, row_zero), TB2(tower_right, row_zero);
-    sf::Sprite tower_black1=TB1.init(general,textPieces[3],tower_left,row_zero);//1
-    sf::Sprite tower_black2=TB2.init(general,textPieces[3],tower_right,row_zero);//8
+    Tower TB1(tower_left, row_zero, general), TB2(tower_right, row_zero, general);
+    sf::Sprite tower_black1=TB1.init(general,textPieces[3]);//1
+    sf::Sprite tower_black2=TB2.init(general,textPieces[3]);//8
 
     ///////////////   PEONES   //////////////////////////////
     std::vector<Peon> PBs, PWs;
@@ -443,14 +516,14 @@ void execute(){
     std::vector<sf::Sprite> teamWhite;
 
     for(int i=0; i<8; i++){
-        Peon PB(i,1); //9 hasta -> 16
+        Peon PB(i,1, general); //9 hasta -> 16
         PBs.push_back(PB);
-        sf::Sprite peonBlack=PB.init(general,textPieces[0],i,1); //todos en la fila 1 EQUIPO NEGRO
+        sf::Sprite peonBlack=PB.init(general,textPieces[0]); //todos en la fila 1 EQUIPO NEGRO
         teamBlack.push_back(peonBlack);
 
-        Peon PW(i,6); //17 hasta -> 24
+        Peon PW(i,6, general); //17 hasta -> 24
         PWs.push_back(PW);
-        sf::Sprite peonWhite=PW.init(general,textPieces[1],i,6); //EQUIPO BLANCO FILA 6
+        sf::Sprite peonWhite=PW.init(general,textPieces[1]); //EQUIPO BLANCO FILA 6
         teamWhite.push_back(peonWhite);
     }
 
