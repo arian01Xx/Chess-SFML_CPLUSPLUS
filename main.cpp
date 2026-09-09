@@ -15,7 +15,16 @@ std::string pieceSelected; //utilizar esto para reconocer pieza seleccionada
 std::vector<int> _coords; //ESTO CREO QUE NO LO UTILIZAMOS
 bool turnWhite=true; //empiezan las blancas siempre!
 
-struct General{ 
+struct Boxes;
+
+std::vector<Boxes> cajasDelMapa;
+
+struct Boxes{
+    sf::RectangleShape box;
+    std::pair<int,int> coords; //COLUMNA - FILAS!!!
+};
+
+struct General{
     std::vector<std::vector<int>> map={
         {2,3,4,5,6,4,3,2}, 
         {1,1,1,1,1,1,1,1},
@@ -36,7 +45,7 @@ struct General{
         {0,0,0,0,0,0,0,0},
         {0,0,0,0,0,0,0,0},
         {0,0,0,0,0,0,0,0}
-    };
+    }; 
 
     sf::Sprite init(sf::Texture& texture, int& j, int i){ //NO OLVIDES LA REFERENCIA PARA QUE APAREZCAN LOS CAMBIOS!!
         sf::Sprite Piece(texture);
@@ -99,6 +108,21 @@ struct General{
         if((col>=250 && col<=730) && (row>=150 && row<=630)) ans=true;
         else ans=false;
         return ans;
+    }
+
+    void Pos_moving(sf::RenderWindow& window, int new_x, int new_y){
+        std::cout<<"BUSCANDO CASILLA: "<<new_x<<" - "<<new_y<<std::endl;
+
+        for(auto& x: cajasDelMapa){
+            if(x.coords.first==new_y && x.coords.second==new_x){ //RECUERDA COLUMNA-FILA
+                std::cout<<"!!!!CASILLA ENCONTRADA!!!!!!!"
+                         <<x.coords.first<<" - "
+                         <<x.coords.second<<std::endl;
+
+                x.box.setFillColor(sf::Color(255, 182, 193));
+                window.draw(x.box);
+            }
+        }
     }
 
     std::vector<sf::Texture> texturePieces(){
@@ -193,6 +217,12 @@ struct World{
         sf::RectangleShape bottom(sf::Vector2f(CELL,CELL)); //TAMAÑO DE LA CAJA
         bottom.setFillColor(x);
         bottom.setPosition(sf::Vector2f(250+CELL*c, 150+CELL*r)); //columnas, filas
+        
+        Boxes _box;
+        _box.box=bottom;
+        _box.coords={c,r}; //columna filas
+        cajasDelMapa.push_back(_box);
+
         window.draw(bottom);
     }
 };
@@ -224,20 +254,22 @@ struct Piece{
  {1,1,1,1,1,1,1,1},
  {2,3,4,5,6,4,3,2}
  WHITE TEAM: filas:7
- * */
+ */
 
 struct Peon: Piece{ //COLUMNA-FILA
-    Peon(int _y, int _x, General& general): Piece(_y,_x,_y==6) {
-        if(_y==6) general.teams[_x][_y]=2; //EQUIPO BLANCO
+    Peon(int _y, int _x, General& general): Piece(_y,_x,_x==6) {
+        if(_x==6) general.teams[_x][_y]=2; //EQUIPO BLANCO
         else general.teams[_x][_y]=1; //EQUIPO NEGRO
     }
 
-    void execute(General& general){
+    void execute(General& general, sf::RenderWindow& window){
         if(white){ //team 2
-            /*if(general.map[_x-1][_y]==0)  
-            if(general.map[_x-2][_y]==0) 
-            if(general.teams[_x-1][_y-1]==1)
-            if(general.teams[_x-1][_y+1]==1)*/
+            if(general.map[_x-1][_y]==0) general.Pos_moving(window, _x-1, _y); 
+            if(general.map[_x-2][_y]==0) general.Pos_moving(window, _x-2, _y);
+            if(_y-1>=0 && 
+                general.teams[_x-1][_y-1]==1) general.Pos_moving(window, _x-1, _y-1);
+            if(_y+1<8 && 
+                general.teams[_x-1][_y+1]==1) general.Pos_moving(window, _x-1, _y+1);
         }
     }
 };
@@ -316,7 +348,7 @@ void ThisPieceWasSelected(int pieceX, int pieceY){
     std::cout<<"y_1: "<<y_1<<std::endl;
 }
 
-void evaluate(General& general, King& king, Queen& queen, Caballo& caballo1, Caballo& caballo2, 
+void evaluate(sf::RenderWindow& window, General& general, King& king, Queen& queen, Caballo& caballo1, Caballo& caballo2, 
               Alfil& alfil1, Alfil& alfil2, Tower& tower1, Tower& tower2, std::vector<Peon>& Peons){
     /***************
      2,3,4,5,6,4,3,2
@@ -329,7 +361,7 @@ void evaluate(General& general, King& king, Queen& queen, Caballo& caballo1, Cab
         for(auto& p: Peons){ 
             if(_x==p.x && _y==p.y){
                 ThisPieceWasSelected(p.x, p.y);
-                p.execute(general); //pinta los cuadros donde tiene permitido moverse
+                p.execute(general, window); //pinta los cuadros donde tiene permitido moverse
                 return;
             }            
             ThisPieceNotSelected();
@@ -397,7 +429,7 @@ void evaluate(General& general, King& king, Queen& queen, Caballo& caballo1, Cab
     }
 }
 
-void whatPiecesWasSelected(General& general, King& kingW1, King& kingB1, Queen& queenW1, Queen& queenB1, 
+void whatPiecesWasSelected(sf::RenderWindow& window, General& general, King& kingW1, King& kingB1, Queen& queenW1, Queen& queenB1, 
                            Caballo& caballoW1, Caballo& caballoW2, Caballo& caballoB1,
                            Caballo& caballoB2, Alfil& alfilW1, Alfil& alfilW2, 
                            Alfil& alfilB1, Alfil& alfilB2, Tower& towerW1, Tower& towerW2,
@@ -408,18 +440,19 @@ void whatPiecesWasSelected(General& general, King& kingW1, King& kingB1, Queen& 
         turnWhite=false; //SIN EMBARGO ESTO ES TEMPORAL YA QUE NO DEBE SER ASI
                          //EL TURNO ES SOLO CUANDO LA PIEZA SE MUEVA POR COMPLETO DEL SITIO
                          //POR LO QUE ESTO ES TEMPORAL Y NECESITA SER REUBICADO
-        evaluate(general, kingW1, queenW1, caballoW1, caballoW2, alfilW1, alfilW2, towerW1, towerW2, PeonWs);
+        evaluate(window, general, kingW1, queenW1, caballoW1, caballoW2, alfilW1, alfilW2, towerW1, towerW2, PeonWs);
     }else{
         turnWhite=true; //SIN EMBARGO ESTO ES TEMPORAL YA QUE NO DEBE SER ASI
                          //EL TURNO ES SOLO CUANDO LA PIEZA SE MUEVA POR COMPLETO DEL SITIO
                          //POR LO QUE ESTO ES TEMPORAL Y NECESITA SER REUBICADO
-        evaluate(general, kingB1, queenB1, caballoB1, caballoB2, alfilB1, alfilB2, towerB1, towerB2, PeonBs);
+        evaluate(window, general, kingB1, queenB1, caballoB1, caballoB2, alfilB1, alfilB2, towerB1, towerB2, PeonBs);
     }
 }
 
 void infoGeneral(int& col, int& row, bool& evaluate, General& general){
-    general._pieceSelected();
+    //general._pieceSelected();
     _coords=general.coords(col, row); //vector en datos generales
+    general._pieceSelected();
 
     std::system("clear");
     std::cout<<"INFO COLUMN: "<<col<<std::endl;
@@ -535,6 +568,14 @@ void execute(){
     int col, row;
     bool _eva=false;
 
+    //---------SE CREA EL TABLERO SOLO UNA VEZ!!!------------------!!!!
+    for(int i=0; i<8; i++){
+        for(int j=0; j<8; j++){
+            if((i+j)%2==0) w.CreateBottom(window, j, i, sf::Color::White);
+            else w.CreateBottom(window, j, i, sf::Color(0, 100, 0));
+        }
+    }
+
     while(window.isOpen()){
         while(const std::optional event=window.pollEvent()){
             if(event->is<sf::Event::Closed>()) window.close();
@@ -558,7 +599,7 @@ void execute(){
 
                     if(_eva){
                         infoGeneral(col,row,_eva,general);
-                        whatPiecesWasSelected(general,KW1,KB1,QW1,QB1,CW1,CW2,CB1,CB2,
+                        whatPiecesWasSelected(window, general,KW1,KB1,QW1,QB1,CW1,CW2,CB1,CB2,
                                   AW1,AW2,AB1,AB2,TW1,TW2,TB1,TB2,
                                   PBs,PWs
                         ); //pieza seleccionada, calculo de los cuadros que puede moverse
@@ -569,13 +610,17 @@ void execute(){
         } 
 
         window.clear();
+        //cajasDelMapa.clear();
 
         //////////////////    TABLERO      /////////////////////
-        for(int i=0; i<8; i++){
+        /*for(int i=0; i<8; i++){
             for(int j=0; j<8; j++){
                 if((i+j)%2==0) w.CreateBottom(window, j, i, sf::Color::White);
                 else w.CreateBottom(window, j, i, sf::Color(0, 100, 0));
             }
+        }*/
+        for(auto& x: cajasDelMapa){
+            window.draw(x.box);
         }
 
         //drawingVectors(window, teamBlack, teamWhite);
